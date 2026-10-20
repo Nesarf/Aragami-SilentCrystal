@@ -133,6 +133,33 @@ Every artifact is produced **per target**, so a download can carry a default. `A
 selects that default; an explicit `--target` argument always overrides it, which is what keeps a
 target-specific build from becoming a target-*locked* one.
 
+**The Windows artifacts are Authenticode-signed, with a self-signed certificate, and everything the
+signature cannot reach is covered by a signed list.** `aragami.exe`, its two target variants and the three
+MSIs carry a signature from `O=S.M.Y.T., CN=S.M.Y.T. Code Signing`, timestamped by a public authority. What
+that signature is worth is worth stating rather than implying: it proves the file is the one that was signed
+and has not changed since, and it names the publisher **within that certificate**. It does not establish
+identity to a public certification authority, because there is none -- so Windows will still warn unless the
+certificate itself is trusted on the machine reading it. A self-signed installer that says it is self-signed
+is more useful than one whose origin the reader has to guess.
+
+Authenticode exists for PE and nowhere else, so the archive, package, AppImage and manifest formats -- the
+other twenty-five of the thirty-one assets -- carry their provenance in `SHA256SUMS.txt` instead, with
+`SHA256SUMS.txt.sig` (Ed25519, detached) and `allowed_signers` (the public key) beside it. Checking them
+needs nothing from this project:
+
+```
+Get-FileHash -Algorithm SHA256 <file>            # Windows
+sha256sum -c SHA256SUMS.txt                      # Linux / macOS
+ssh-keygen -Y verify -f allowed_signers -I Nesarf@users.noreply.github.com -n file -s SHA256SUMS.txt.sig < SHA256SUMS.txt
+```
+
+Three things about it are worth being precise about. The list is built **after** signing and uploading,
+because Authenticode rewrites the PE it signs and a list made earlier would describe bytes that no longer
+exist. It does not list itself -- a file cannot contain its own digest, which is what the detached signature
+is there for. And it proves that these bytes are the ones that were published, not that the account behind
+this repository is who it claims to be: the trust anchor is the account and the repository, the same one the
+download already rests on.
+
 | Form | Runtime it needs | Verified by |
 |---|---|---|
 | Portable `.zip` + `.cmd` launchers | **Node.js >= 18 on the host** | Extracted, all six launchers run from a foreign working directory |
