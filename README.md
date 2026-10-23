@@ -392,6 +392,45 @@ pasted into `notes.txt`, or a password inside a spreadsheet, is invisible to it.
 finds nothing is **not** a clean bill of health; it means nothing matched a name. The CLI says so at
 the point where a reader would otherwise take silence for approval.
 
+### `aragami_clean`
+
+**A removal plan. It removes nothing.**
+
+The permission table is `REMOVABLE` in the check catalog, keyed by check id, and each value states
+what removing that file **costs**. A check whose id is not in the table is reported with its path and
+left alone -- and that is the more useful half of the output, because it is where a file that holds a
+credential says so. `logins.json`, `key4.db` and `cert9.db` are absent from the table by design.
+
+This is the part of a cleanup a person cannot work out from a file name. The deletion itself is a
+command they can write in a second once they know which files they mean, and writing it is theirs to
+do: this project writes no file, moves no file and removes no file, and that sentence has to stay true
+or the tool is no longer the one this README describes.
+
+### `aragami_contain`
+
+**The containment moves, as a list.**
+
+Three layers, in the order they matter: `sever` an unwanted binary's outbound traffic with a **program**
+rule (which needs no knowledge of the pool or controller it talks to), `disable` it three ways, and
+`purge` the mechanism that would start it again. The order is derived from the evidence: something
+recorded as starting itself is starved before it is struck, because a file deleted from disk is a file
+the next boot can recreate.
+
+The input is `persistence` entries you supply -- `{ source, subject, target, at }`, from a triage run
+of your own. **This project performs no triage**, so an empty plan means nothing told it what to look
+at, not that the machine is clean. A component of Windows' own security software gets no move at all:
+the list names the product and sends the reader to `Get-AuthenticodeSignature`.
+
+### `aragami_processes`
+
+**The read-only half of a termination: it names the process and ends none.**
+
+It reports which entries sit in a directory any process can write to, which one is the process running
+the tool (and its parent), and what identified each entry -- a path where one is readable, a name where
+it is not. A request that matches nothing is reported rather than resolved to something close. The
+platform is named in the response (`windows-cim` or `posix-ps`), because "nothing matched" means one
+thing where the table was read and another where it could not be.
+
 ---
 
 ## 5. The four-layer model
