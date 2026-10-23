@@ -50,7 +50,9 @@ This tool performs a static audit only: it reads files, never launches the appli
 under audit, and never touches the network (except the version lookup).
 It does NOT address: traffic correlation and timing analysis, endpoint compromise
 (malware / device seizure), or anything that happens after decryption.
-It protects [configuration posture and static residue]. It is NOT an anti-tracking tool.
+It protects what is visible without running anything: configuration posture, the residue software and
+sessions leave behind, and -- through the plan tools -- what a person could do about either. It is NOT
+an anti-tracking tool.
 A clean audit is NOT proof of safety. Treating it as one is a misuse.
 ```
 
