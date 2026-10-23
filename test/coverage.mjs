@@ -45,7 +45,11 @@ for (const s of suites) {
     env: { ...process.env, NODE_V8_COVERAGE: covDir, NO_COLOR: "1" },
   });
   const ok = r.status === 0;
-  results.push({ suite: s, ok, status: r.status });
+  // The stdout is kept, because the count a suite reports is the only thing that can be checked
+  // against the verification table -- and until this was added, that table had drifted for six of its
+  // eight rows while this gate stayed green. A guard is a property of the files it is pointed at.
+  const passed = /passed\s+(\d+)\s*[/,]\s*(\d+)/.exec(String(r.stdout ?? ""));
+  results.push({ suite: s, ok, status: r.status, items: passed ? Number(passed[1]) : null });
   console.log(`  ${ok ? "\u001b[32m[ok]\u001b[0m" : "\u001b[31m[FAIL]\u001b[0m"} ${s}  exit=${r.status}`);
 }
 
@@ -173,11 +177,42 @@ if (wantGap) {
 
 try { fs.rmSync(covDir, { recursive: true, force: true }); } catch {}
 
+/* ----------- the verification table is checked, not just written ----------- */
+
+// WHY THIS EXISTS: the table in the README is where a reader is told what the tests prove, and it had
+// drifted on six of eight rows -- 227 against 238, 110 against 113, a coverage figure two major
+// versions old -- while this gate stayed green, because it only ever looked at coverage. A number a
+// reader cannot trust is worse than no number: it is a claim, presented as evidence.
+const drift = [];
+const claimed = new Map();
+const docPath = path.join(root, "README.md");
+if (fs.existsSync(docPath)) {
+  const text = fs.readFileSync(docPath, "utf8");
+  for (const m of text.matchAll(/\| `(test\/[a-z-]+\.mjs)` \|.*?\| \*\*([\d,]+) items\*\* \|/g)) {
+    claimed.set(m[1], Number(m[2].replace(/,/g, "")));
+  }
+  for (const r of results) {
+    if (r.items === null) continue;                 // a suite that reports calls rather than items
+    const want = claimed.get(r.suite);
+    if (want === undefined) { drift.push(`README.md: no row for ${r.suite}`); continue; }
+    if (want !== r.items) drift.push(`README.md: says ${want} items for ${r.suite}, the suite passed ${r.items}`);
+  }
+  // And the other direction: a row for a suite that no longer runs is a row about nothing.
+  for (const [suite] of claimed) {
+    if (!results.some((r) => r.suite === suite)) drift.push(`README.md: names ${suite}, which this gate does not run`);
+  }
+}
+if (drift.length) {
+  console.log("\n  \u001b[31mthe verification table no longer matches the suites\u001b[0m");
+  for (const d of drift) console.log(`    ${d}`);
+}
+
 const suiteFailed = results.some((r) => !r.ok);
 console.log(
   `\n  Summary: suites ${results.filter((r) => r.ok).length}/${results.length} passed, line coverage ${overall.toFixed(1)}%`
 );
 
+if (drift.length) process.exit(1);
 if (suiteFailed) process.exit(1);
 if (minPct !== null && overall < minPct) {
   console.log(`  \u001b[31mcoverage ${overall.toFixed(1)}% is below the threshold ${minPct}%\u001b[0m`);
