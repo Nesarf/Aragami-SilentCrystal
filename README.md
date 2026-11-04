@@ -2,7 +2,13 @@
 
 [![release](https://github.com/Nesarf/Aragami-SilentCrystal/actions/workflows/release.yml/badge.svg)](https://github.com/Nesarf/Aragami-SilentCrystal/actions/workflows/release.yml)
 
-**A portable static posture auditor for Tor Browser and Firefox.**
+**A portable static posture auditor for Tor Browser and Firefox -- and three tools that say what a
+person could do about what it finds.**
+
+The three added in 0.3.0 are plans and nothing else: a removal plan that states what each file costs
+and keeps the credential stores out of it, a containment plan whose order is derived from whether
+anything is recorded as restarting itself, and a process list that ends nothing. **Read-only, entirely**
+is still the first claim this project makes, and it is still true.
 
 One pure-Node head (`lib/core.mjs`), two interfaces (MCP stdio server + CLI), sharing the same single `TOOLS[].execute` -- no second implementation.
 
